@@ -57,6 +57,12 @@ void TicTacToe::endgame(const account_name player1, const account_name player2)
   games games_(_self, _self);
   auto it = games_.find(player1);
   eosio_assert(it != games_.end(), "No game for account!");
+
+  // Pay back stakes to players if game not finished.
+  if (it->isState(State::PlayerTurn)) {
+    it->payStake(_self);
+  }
+
   games_.erase(it);
   eosio_assert(it != games_.end(), "Could not remove game!");
 }
