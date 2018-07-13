@@ -36,8 +36,8 @@ void TicTacToe::newgame(const account_name player1, const account_name player2, 
   eosio_assert(stake.amount > 0, "Stake must be positive!");
 
   // Send stake from each player to the contract to hold for the winner.
-  transfer(player1, _self, stake, "TicTacToc gets stake from player1");
-  transfer(player2, _self, stake, "TicTacToc gets stake from player2");
+  transfer(player1, _self, stake, "TicTacToe gets stake from player1");
+  transfer(player2, _self, stake, "TicTacToe gets stake from player2");
 
   games_.emplace(player1, [&](auto &game) {
     game.player1 = player1;
@@ -138,11 +138,11 @@ void TicTacToe::game::payStake(const account_name contract) const
   if (isState(State::Won)) {
     eosio_assert(winner > 0, "No winner to pay stake to!");
     const auto loser = (winner == player1 ? player2 : player1);
-    transfer(contract, winner, stake * 2, "TicTacToc winner gets double stake");
+    transfer(contract, winner, stake * 2, "TicTacToe winner gets double stake");
   }
   else {
-    transfer(contract, player1, stake, "TicTacToc sends back stake to player1");
-    transfer(contract, player2, stake, "TicTacToc sends back stake to player2");
+    transfer(contract, player1, stake, "TicTacToe sends back stake to player1");
+    transfer(contract, player2, stake, "TicTacToe sends back stake to player2");
   }
 }
 
