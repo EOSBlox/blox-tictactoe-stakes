@@ -12,6 +12,14 @@ static uint8_t coord(const uint8_t row, const uint8_t col)
   return (row * 3) + col;
 }
 
+static void transfer(const account_name from, const account_name to, const eosio::asset amount,
+                     const std::string &memo)
+{
+  eosio::action(eosio::permission_level{from, N(active)}, N(eosio.token), N(transfer),
+                std::make_tuple(from, to, amount, memo))
+    .send();
+}
+
 TicTacToe::TicTacToe(account_name self) : contract(self)
 {
 }
@@ -28,14 +36,8 @@ void TicTacToe::newgame(const account_name player1, const account_name player2, 
   eosio_assert(stake.amount > 0, "Stake must be positive!");
 
   // Send stake from each player to the contract to hold for the winner.
-  eosio::action(
-    eosio::permission_level{player1, N(active)}, N(eosio.token), N(transfer),
-    std::make_tuple(player1, _self, stake, std::string("TicTacToc gets stake from player1")))
-    .send();
-  eosio::action(
-    eosio::permission_level{player2, N(active)}, N(eosio.token), N(transfer),
-    std::make_tuple(player2, _self, stake, std::string("TicTacToc gets stake from player2")))
-    .send();
+  transfer(player1, _self, stake, "TicTacToc gets stake from player1");
+  transfer(player2, _self, stake, "TicTacToc gets stake from player2");
 
   games_.emplace(player1, [&](auto &game) {
     game.player1 = player1;
@@ -136,20 +138,11 @@ void TicTacToe::game::payStake(const account_name contract) const
   if (isState(State::Won)) {
     eosio_assert(winner > 0, "No winner to pay stake to!");
     const auto loser = (winner == player1 ? player2 : player1);
-    eosio::action(eosio::permission_level{contract, N(active)}, N(eosio.token), N(transfer),
-                  std::make_tuple(contract, winner, stake * 2,
-                                  std::string("TicTacToc winner gets double stake")))
-      .send();
+    transfer(contract, winner, stake * 2, "TicTacToc winner gets double stake");
   }
   else {
-    eosio::action(eosio::permission_level{contract, N(active)}, N(eosio.token), N(transfer),
-                  std::make_tuple(contract, player1, stake,
-                                  std::string("TicTacToc sends back stake to player1")))
-      .send();
-    eosio::action(eosio::permission_level{contract, N(active)}, N(eosio.token), N(transfer),
-                  std::make_tuple(contract, player2, stake,
-                                  std::string("TicTacToc sends back stake to player2")))
-      .send();
+    transfer(contract, player1, stake, "TicTacToc sends back stake to player1");
+    transfer(contract, player2, stake, "TicTacToc sends back stake to player2");
   }
 }
 
