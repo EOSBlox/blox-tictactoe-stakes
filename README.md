@@ -3,11 +3,13 @@ Two-player TicTacToe winner-takes-all with EOS stakes via smart contract.
 
 ## Actions
 The smart contract has three actions:
-  * `newgame(player1, player2, stake)`: Creates a new game between `player1` and `player2` where the
-     winner gets `stake` ("1.0000 EOS" for instance).
-  * `endgame(player1, player2)`: Ends game and removes entries from table.
-  * `play(player1, player2, row, col)`: Current player takes turn at row and column position. If the
-    player wins the game, `stake` is transferred from the losing player's balance.
+  * `newgame(player1, player2, stake)`: Creates a new game between `player1` and `player2` for a
+    defined stake.  Each player automatically transfers this emount to the contract to keep. On a
+    draw, both players get back their stakes. If a  winner is found then that player gets double the
+    initial stake.
+  * `endgame(player1, player2)`: Ends game and removes entries from table. If game is not finished
+    then players get their stakes back.
+  * `play(player1, player2, row, col)`: Current player takes turn at row and column position.
 
 ## Compilation
 EOSIO is expected to be compiled and available on the system, especially `eosiocpp`:
