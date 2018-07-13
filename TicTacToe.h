@@ -38,12 +38,13 @@ private:
     uint64_t primary_key() const;
     void play(const uint8_t coord);
     void setState(const State state);
+    bool isState(const State state) const;
+    void payStake(const account_name contract) const;
 
     EOSLIB_SERIALIZE(game, (player1)(player2)(state)(winner)(turn)(moves)(board)(stake))
 
   private:
     void updateState();
-    void payStake();
 
     bool isFree(const uint8_t row, const uint8_t col) const;
     bool isCross(const uint8_t row, const uint8_t col) const;

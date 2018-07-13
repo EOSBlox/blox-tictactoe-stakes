@@ -27,6 +27,16 @@ void TicTacToe::newgame(const account_name player1, const account_name player2, 
   eosio_assert(stake.is_valid(), "Invalid stake!");
   eosio_assert(stake.amount > 0, "Stake must be positive!");
 
+  // Send stake from each player to the contract to hold for the winner.
+  eosio::action(
+    eosio::permission_level{player1, N(active)}, N(eosio.token), N(transfer),
+    std::make_tuple(player1, _self, stake, std::string("TicTacToc gets stake from player1")))
+    .send();
+  eosio::action(
+    eosio::permission_level{player2, N(active)}, N(eosio.token), N(transfer),
+    std::make_tuple(player2, _self, stake, std::string("TicTacToc gets stake from player2")))
+    .send();
+
   games_.emplace(player1, [&](auto &game) {
     game.player1 = player1;
     game.player2 = player2;
@@ -66,7 +76,12 @@ void TicTacToe::play(const account_name player1, const account_name player2, uin
   const auto c = coord(row, col);
   eosio_assert(it->board[c] == ' ', "Position is occupied!");
 
-  games_.modify(it, it->turn, [&](auto &game) { game.play(c); });
+  games_.modify(it, it->turn, [&](auto &game) {
+    game.play(c);
+    if (game.isState(State::Won) || game.isState(State::Draw)) {
+      game.payStake(_self);
+    }
+  });
 }
 
 uint64_t TicTacToe::game::primary_key() const
@@ -91,7 +106,6 @@ void TicTacToe::game::updateState()
     setState(State::Won);
     winner = (sym == 'x' ? player1 : player2);
     turn = 0;
-    payStake();
     return true;
   };
 
@@ -111,20 +125,36 @@ void TicTacToe::game::updateState()
   }
 }
 
-void TicTacToe::game::payStake()
+void TicTacToe::game::payStake(const account_name contract) const
 {
-  eosio_assert(winner > 0, "No winner to pay stake to!");
-  const auto loser = (winner == player1 ? player2 : player1);
-
-  // NOTE: This action requires that the sender has permission to use a contract to transfer.
-  eosio::action(eosio::permission_level{loser, N(active)}, N(eosio.token), N(transfer),
-                std::make_tuple(loser, winner, stake, std::string("TicTacToc winner gets stake")))
-    .send();
+  if (isState(State::Won)) {
+    eosio_assert(winner > 0, "No winner to pay stake to!");
+    const auto loser = (winner == player1 ? player2 : player1);
+    eosio::action(eosio::permission_level{contract, N(active)}, N(eosio.token), N(transfer),
+                  std::make_tuple(contract, winner, stake * 2,
+                                  std::string("TicTacToc winner gets double stake")))
+      .send();
+  }
+  else {
+    eosio::action(eosio::permission_level{contract, N(active)}, N(eosio.token), N(transfer),
+                  std::make_tuple(contract, player1, stake,
+                                  std::string("TicTacToc sends back stake to player1")))
+      .send();
+    eosio::action(eosio::permission_level{contract, N(active)}, N(eosio.token), N(transfer),
+                  std::make_tuple(contract, player2, stake,
+                                  std::string("TicTacToc sends back stake to player2")))
+      .send();
+  }
 }
 
 void TicTacToe::game::setState(const State state)
 {
   this->state = static_cast<uint8_t>(state);
+}
+
+bool TicTacToe::game::isState(const State state) const
+{
+  return this->state == static_cast<uint8_t>(state);
 }
 
 bool TicTacToe::game::isFree(const uint8_t row, const uint8_t col) const
