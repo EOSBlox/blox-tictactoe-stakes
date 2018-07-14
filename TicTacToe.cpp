@@ -60,8 +60,8 @@ void TicTacToe::endgame(const account_name player1, const account_name player2)
   auto it = games_.find(player1);
   eosio_assert(it != games_.end(), "No game for account!");
 
-  // Pay back stakes to players if game not finished.
-  if (it->isState(State::PlayerTurn)) {
+  // Pay back stakes to players if game not finished IF no moves have been made yet.
+  if (it->isState(State::PlayerTurn) && it->moves == 0) {
     it->payStake(_self);
   }
 

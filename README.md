@@ -8,7 +8,7 @@ The smart contract has three actions:
     draw, both players get back their stakes. If a  winner is found then that player gets double the
     initial stake.
   * `endgame(player1, player2)`: Ends game and removes entries from table. If game is not finished
-    then players get their stakes back.
+    then players get their stakes back, but _only_ if no moves have been made.
   * `play(player1, player2, row, col)`: Current player takes turn at row and column position.
 
 ## Compilation
