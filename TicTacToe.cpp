@@ -28,9 +28,14 @@ void TicTacToe::newgame(const account_name player1, const account_name player2, 
 {
   require_auth(player1);
   require_auth(player2);
+  eosio_assert(player1 != player2, "Players cannot be the same!");
 
   games games_(_self, _self);
   eosio_assert(games_.find(player1) == games_.end(), "Player 1 already has a game!");
+  eosio_assert(games_.find(player2) == games_.end(), "Player 2 already has a game!");
+  const auto index = games_.get_index<N(player2)>();
+  eosio_assert(index.find(player2) == index.end(), "Player 2 already has a game as player 2!");
+  eosio_assert(index.find(player1) == index.end(), "Player 1 already has a game as player 2!");
 
   eosio_assert(stake.is_valid(), "Invalid stake!");
   eosio_assert(stake.amount > 0, "Stake must be > 0.0!");
@@ -98,6 +103,11 @@ void TicTacToe::play(const account_name player1, const account_name player2, uin
 uint64_t TicTacToe::game::primary_key() const
 {
   return player1;
+}
+
+uint64_t TicTacToe::game::by_player2() const
+{
+  return player2;
 }
 
 void TicTacToe::game::play(const uint8_t c)

@@ -36,6 +36,8 @@ private:
     eosio::asset stake; ///< What's at stake for the winner.
 
     uint64_t primary_key() const;
+    uint64_t by_player2() const;
+
     void play(const uint8_t coord);
     void setState(const State state);
     bool isState(const State state) const;
@@ -59,7 +61,9 @@ private:
     char diagWinner() const;
   };
 
-  using games = eosio::multi_index<N(game), game>;
+  using games = eosio::multi_index<
+    N(game), game,
+    eosio::indexed_by<N(player2), eosio::const_mem_fun<game, uint64_t, &game::by_player2>>>;
 };
 
 EOSIO_ABI(TicTacToe, (newgame)(endgame)(play))
