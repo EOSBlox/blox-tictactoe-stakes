@@ -33,7 +33,10 @@ void TicTacToe::newgame(const account_name player1, const account_name player2, 
   eosio_assert(games_.find(player1) == games_.end(), "Player 1 already has a game!");
 
   eosio_assert(stake.is_valid(), "Invalid stake!");
-  eosio_assert(stake.amount > 0, "Stake must be positive!");
+  eosio_assert(stake.amount > 0, "Stake must be > 0.0!");
+
+  // 1.0 = 10000 with precision of 4.
+  eosio_assert(stake.amount <= 10000, "Stake must be <= 1.0!");
 
   // Send stake from each player to the contract to hold for the winner.
   transfer(player1, _self, stake, "TicTacToe gets stake from player1");
